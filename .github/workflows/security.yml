@@ -1,0 +1,43 @@
+name: Security Check
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * *'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  scan:
+    name: 'Image Scan (PHP: ${{ matrix.php-version }})'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version:
+          - '8.1'
+          - '8.2'
+          - '8.3'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Pull image
+        run: docker pull onlishop/docker-base:${{ matrix.php-version }}
+
+      - name: Login into Github Docker Registery
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Scan for vulnerabilities
+        id: scan
+        uses: crazy-max/ghaction-container-scan@v3
+        with:
+          image: onlishop/docker-base:${{ matrix.php-version }}
+          dockerfile: ./${{ matrix.php-version }}/Dockerfile
+
+      - name: Upload SARIF file
+        if: ${{ steps.scan.outputs.sarif != '' }}
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}

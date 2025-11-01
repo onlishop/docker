@@ -1,0 +1,10 @@
+{
+  "name": "onlishop/docker",
+  "type": "metapackage",
+  "license": "MIT",
+  "description": "Docker image for Onlishop 6 production",
+  "require": {
+    "onlishop/core": ">=6.7.0.0",
+    "onlishop/deployment-helper": "*"
+  }
+}
